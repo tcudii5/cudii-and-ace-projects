@@ -77,25 +77,38 @@
     return { cost, open, taskCount: tasks.length };
   }
 
+  const statusClass = (s) => "s-" + String(s || "Lead").replace(/\s+/g, "");
+
   /* ---------- projects list ---------- */
   function renderProjects() {
     const list = $("#project-list");
     list.innerHTML = "";
     $("#projects-empty").hidden = state.projects.length > 0;
+    $("#project-count").textContent = state.projects.length;
+
+    let portfolio = 0;
     for (const proj of state.projects) {
       const { cost, open, taskCount } = projectTotals(proj.id);
+      portfolio += cost;
+      const pct = taskCount ? Math.round(((taskCount - open) / taskCount) * 100) : 0;
+      const sc = statusClass(proj.status);
       const el = document.createElement("div");
-      el.className = "card tap";
+      el.className = "row tap " + sc;
       el.innerHTML =
         `<div class="grow">
            <div class="title">${esc(proj.name)}</div>
            <div class="sub">${esc(proj.client || "No client")} · ${open}/${taskCount} to do</div>
+           <div class="progress"><span style="width:${pct}%"></span></div>
          </div>
-         <span class="pill">${esc(proj.status)}</span>
+         <span class="pill ${sc}">${esc(proj.status)}</span>
          <span class="amt">${money(cost)}</span>`;
       el.onclick = () => openProject(proj.id);
       list.appendChild(el);
     }
+
+    const pt = $("#portfolio-total");
+    pt.hidden = state.projects.length === 0;
+    $("#portfolio-value").textContent = money(portfolio);
   }
 
   /* ---------- project detail ---------- */
@@ -115,15 +128,17 @@
     $("#detail-name").value = proj.name;
     $("#detail-client").value = proj.client || "";
     $("#detail-status").value = proj.status || "Lead";
-    const { cost, open } = projectTotals(proj.id);
+    const { cost, open, taskCount } = projectTotals(proj.id);
     $("#detail-total").textContent = money(cost);
     $("#detail-open").textContent = open;
+    $("#detail-progress").style.width =
+      (taskCount ? Math.round(((taskCount - open) / taskCount) * 100) : 0) + "%";
 
     const tl = $("#task-list");
     tl.innerHTML = "";
     for (const t of state.tasks.filter((t) => t.project_id === proj.id)) {
       const el = document.createElement("div");
-      el.className = "card" + (t.done ? " task-done" : "");
+      el.className = "row" + (t.done ? " task-done" : "");
       el.innerHTML =
         `<button class="task-check${t.done ? " done" : ""}" aria-label="toggle">${t.done ? "✓" : ""}</button>
          <div class="grow title">${esc(t.title)}</div>
@@ -139,7 +154,7 @@
     cl.innerHTML = "";
     for (const c of state.costs.filter((c) => c.project_id === proj.id)) {
       const el = document.createElement("div");
-      el.className = "card";
+      el.className = "row";
       el.innerHTML =
         `<div class="grow title">${esc(c.label)}</div>
          <span class="amt">${money(c.amount)}</span>
@@ -273,8 +288,9 @@
   function start() {
     $("#setup").hidden = true;
     $("#main").hidden = false;
-    const dot = $("#conn-dot");
-    dot.className = "dot " + (sb ? "ok" : "bad");
+    const av = $("#me-av");
+    av.textContent = state.who.charAt(0);
+    av.className = "av av-" + state.who.toLowerCase();
     $("#conn-info").textContent = sb
       ? "Connected to Supabase."
       : "Offline — add keys in config.js and reload.";

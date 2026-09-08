@@ -3,9 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f172a" />
-  <title>Cudii &amp; Ace — Projects</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50' y='68' font-size='54' text-anchor='middle' fill='%23f8fafc' font-family='Arial'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#6c6cff" />
+  <title>Launch Point — Cudii &amp; Ace</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%236c6cff'/%3E%3Ccircle cx='34' cy='50' r='11' fill='%2300c875'/%3E%3Ccircle cx='66' cy='34' r='11' fill='%23fdab3d'/%3E%3Ccircle cx='66' cy='66' r='11' fill='%23e2445c'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -13,47 +16,63 @@
     <!-- Setup screen -->
     <section id="setup" class="screen" hidden>
       <div class="setup-card">
-        <h1>Cudii &amp; Ace</h1>
-        <p class="muted">Project HQ — first-time setup on this device.</p>
+        <div class="brand-lockup">
+          <span class="brand-dots"><i></i><i></i><i></i></span>
+          <div>
+            <h1>Launch Point</h1>
+            <p class="muted">Web development &amp; AI services · Cudii &amp; Ace</p>
+          </div>
+        </div>
 
-        <label>Who are you?</label>
+        <label>Who's signing in on this device?</label>
         <div class="who-row">
-          <button class="who" data-who="Cudii">Cudii</button>
-          <button class="who" data-who="Ace">Ace</button>
+          <button class="who" data-who="Cudii"><span class="av av-cudii">C</span>Cudii</button>
+          <button class="who" data-who="Ace"><span class="av av-ace">A</span>Ace</button>
         </div>
 
         <div id="conn-warn" class="warn" hidden>
           Not connected to Supabase yet. Add your keys in <code>config.js</code>, then reload.
         </div>
 
-        <button id="setup-done" class="primary" disabled>Start</button>
+        <button id="setup-done" class="primary" disabled>Get started</button>
       </div>
     </section>
 
     <!-- Main -->
     <main id="main" hidden>
+      <div id="topbar">
+        <span class="brand-dots sm"><i></i><i></i><i></i></span>
+        <div class="topbar-text">
+          <strong>Launch Point</strong>
+          <span>Web dev &amp; AI · Cudii &amp; Ace</span>
+        </div>
+        <span id="me-av" class="av"></span>
+      </div>
+
       <!-- PROJECTS LIST -->
       <section id="view-projects" class="view">
-        <header class="bar">
-          <h1>Projects</h1>
-          <span id="conn-dot" class="dot" title="connection"></span>
-        </header>
+        <div class="group-head">
+          <span class="group-bar"></span>
+          <h2>Projects</h2>
+          <span id="project-count" class="count-chip">0</span>
+        </div>
 
         <div class="add-row">
-          <input id="new-project" type="text" placeholder="New project name" />
+          <input id="new-project" type="text" placeholder="+ New project" />
           <button id="add-project" class="primary sm">Add</button>
         </div>
 
-        <div id="project-list" class="list"></div>
-        <p id="projects-empty" class="muted center" hidden>No projects yet. Add the first one above.</p>
+        <div id="project-list" class="board"></div>
+        <p id="projects-empty" class="muted center" hidden>No projects yet. Add your first one above.</p>
+
+        <div id="portfolio-total" class="portfolio-total" hidden>
+          <span>Portfolio value</span><strong id="portfolio-value">$0</strong>
+        </div>
       </section>
 
       <!-- PROJECT DETAIL -->
       <section id="view-detail" class="view" hidden>
-        <header class="bar">
-          <button id="back" class="link">‹ Projects</button>
-          <span></span>
-        </header>
+        <button id="back" class="link">‹ All projects</button>
 
         <input id="detail-name" class="detail-name" type="text" />
         <div class="field-row">
@@ -66,37 +85,58 @@
           </select>
         </div>
 
-        <div class="totals">
-          <div><span class="totals-label">Total cost</span><span id="detail-total" class="totals-value">$0</span></div>
-          <div><span class="totals-label">To do</span><span id="detail-open" class="totals-value">0</span></div>
+        <div class="stat-row">
+          <div class="stat"><span class="stat-label">Total cost</span><span id="detail-total" class="stat-value">$0</span></div>
+          <div class="stat"><span class="stat-label">Open tasks</span><span id="detail-open" class="stat-value">0</span></div>
         </div>
+        <div class="progress big"><span id="detail-progress" style="width:0%"></span></div>
 
-        <h2>What needs doing</h2>
+        <div class="group-head">
+          <span class="group-bar green"></span>
+          <h2>What needs doing</h2>
+        </div>
         <div class="add-row">
-          <input id="new-task" type="text" placeholder="Add a task" />
+          <input id="new-task" type="text" placeholder="+ Add a task" />
           <button id="add-task" class="primary sm">Add</button>
         </div>
-        <div id="task-list" class="list"></div>
+        <div id="task-list" class="board"></div>
 
-        <h2>Costs</h2>
+        <div class="group-head">
+          <span class="group-bar orange"></span>
+          <h2>Costs</h2>
+        </div>
         <div class="add-row three">
-          <input id="cost-label" type="text" placeholder="Item (e.g. Hosting)" />
+          <input id="cost-label" type="text" placeholder="Item (e.g. Hosting, API credits)" />
           <input id="cost-amount" type="number" inputmode="decimal" placeholder="0.00" />
           <button id="add-cost" class="primary sm">Add</button>
         </div>
-        <div id="cost-list" class="list"></div>
+        <div id="cost-list" class="board"></div>
 
         <button id="delete-project" class="danger">Delete project</button>
       </section>
 
       <!-- CHAT -->
       <section id="view-chat" class="view" hidden>
-        <header class="bar"><h1>Chat</h1></header>
+        <div class="group-head">
+          <span class="group-bar blue"></span>
+          <h2>Team chat</h2>
+        </div>
         <div id="chat-log" class="chat-log"></div>
         <form id="chat-form" class="chat-form">
-          <input id="chat-input" type="text" placeholder="Message…" autocomplete="off" />
+          <input id="chat-input" type="text" placeholder="Message Ace…" autocomplete="off" />
           <button class="primary sm" type="submit">Send</button>
         </form>
+      </section>
+
+      <!-- ME / SETTINGS -->
+      <section id="view-me" class="view" hidden>
+        <div class="group-head">
+          <span class="group-bar purple"></span>
+          <h2>Me</h2>
+        </div>
+        <p>Signed in as <strong id="me-name"></strong> on this device.</p>
+        <button id="switch-who" class="link">Switch person</button>
+        <p class="muted small" id="conn-info"></p>
       </section>
 
       <!-- NAV -->
@@ -105,14 +145,6 @@
         <button data-nav="chat">Chat<span id="chat-badge" class="badge" hidden></span></button>
         <button data-nav="me">Me</button>
       </nav>
-
-      <!-- ME / SETTINGS -->
-      <section id="view-me" class="view" hidden>
-        <header class="bar"><h1>Me</h1></header>
-        <p>Signed in as <strong id="me-name"></strong> on this device.</p>
-        <button id="switch-who" class="link">Switch person</button>
-        <p class="muted small" id="conn-info"></p>
-      </section>
     </main>
   </div>
 
