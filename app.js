@@ -15,6 +15,60 @@
     ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
     : null;
 
+  /* ---------- storage: Supabase when configured, else this device ---------- */
+  const LS_KEY = "cae.localdb";
+  const uid = () =>
+    (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+  const lsLoad = () => {
+    try {
+      return Object.assign(
+        { projects: [], tasks: [], costs: [], messages: [] },
+        JSON.parse(localStorage.getItem(LS_KEY) || "{}")
+      );
+    } catch {
+      return { projects: [], tasks: [], costs: [], messages: [] };
+    }
+  };
+  const lsSave = (d) => localStorage.setItem(LS_KEY, JSON.stringify(d));
+
+  const db = {
+    async loadAll() {
+      if (sb) {
+        const [p, t, c, m] = await Promise.all([
+          sb.from("projects").select("*").order("created_at", { ascending: true }),
+          sb.from("tasks").select("*").order("created_at", { ascending: true }),
+          sb.from("costs").select("*").order("created_at", { ascending: true }),
+          sb.from("messages").select("*").order("created_at", { ascending: true }).limit(500),
+        ]);
+        return { projects: p.data || [], tasks: t.data || [], costs: c.data || [], messages: m.data || [] };
+      }
+      return lsLoad();
+    },
+    async insert(table, row) {
+      if (sb) return void (await sb.from(table).insert(row));
+      const d = lsLoad();
+      d[table].push(Object.assign({ id: uid(), created_at: new Date().toISOString() }, row));
+      lsSave(d);
+    },
+    async update(table, id, patch) {
+      if (sb) return void (await sb.from(table).update(patch).eq("id", id));
+      const d = lsLoad();
+      const r = d[table].find((x) => x.id === id);
+      if (r) Object.assign(r, patch);
+      lsSave(d);
+    },
+    async remove(table, id) {
+      if (sb) return void (await sb.from(table).delete().eq("id", id));
+      const d = lsLoad();
+      d[table] = d[table].filter((x) => x.id !== id);
+      if (table === "projects") {
+        d.tasks = d.tasks.filter((t) => t.project_id !== id);
+        d.costs = d.costs.filter((c) => c.project_id !== id);
+      }
+      lsSave(d);
+    },
+  };
+
   const state = {
     who: localStorage.getItem("cae.who") || "",
     projects: [], tasks: [], costs: [], messages: [],
@@ -54,17 +108,11 @@
 
   /* ---------- data load ---------- */
   async function loadAll() {
-    if (!sb) return;
-    const [p, t, c, m] = await Promise.all([
-      sb.from("projects").select("*").order("created_at", { ascending: true }),
-      sb.from("tasks").select("*").order("created_at", { ascending: true }),
-      sb.from("costs").select("*").order("created_at", { ascending: true }),
-      sb.from("messages").select("*").order("created_at", { ascending: true }).limit(500),
-    ]);
-    state.projects = p.data || [];
-    state.tasks = t.data || [];
-    state.costs = c.data || [];
-    state.messages = m.data || [];
+    const d = await db.loadAll();
+    state.projects = d.projects;
+    state.tasks = d.tasks;
+    state.costs = d.costs;
+    state.messages = d.messages;
     renderProjects();
     renderDetail();
     renderChat();
@@ -144,9 +192,9 @@
          <div class="grow title">${esc(t.title)}</div>
          <button class="icon-btn" aria-label="delete">✕</button>`;
       el.querySelector(".task-check").onclick = () =>
-        sb.from("tasks").update({ done: !t.done }).eq("id", t.id).then(loadAll);
+        db.update("tasks", t.id, { done: !t.done }).then(loadAll);
       el.querySelector(".icon-btn").onclick = () =>
-        sb.from("tasks").delete().eq("id", t.id).then(loadAll);
+        db.remove("tasks", t.id).then(loadAll);
       tl.appendChild(el);
     }
 
@@ -160,7 +208,7 @@
          <span class="amt">${money(c.amount)}</span>
          <button class="icon-btn" aria-label="delete">✕</button>`;
       el.querySelector(".icon-btn").onclick = () =>
-        sb.from("costs").delete().eq("id", c.id).then(loadAll);
+        db.remove("costs", c.id).then(loadAll);
       cl.appendChild(el);
     }
   }
@@ -173,7 +221,7 @@
       client: $("#detail-client").value.trim(),
       status: $("#detail-status").value,
     };
-    sb.from("projects").update(patch).eq("id", proj.id).then(loadAll);
+    db.update("projects", proj.id, patch).then(loadAll);
   }
 
   /* ---------- chat ---------- */
@@ -230,7 +278,7 @@
       const name = $("#new-project").value.trim();
       if (!name) return;
       $("#new-project").value = "";
-      await sb.from("projects").insert({ name });
+      await db.insert("projects", { name, client: "", status: "Lead" });
       loadAll();
     };
     $("#new-project").addEventListener("keydown", (e) => e.key === "Enter" && $("#add-project").click());
@@ -243,7 +291,7 @@
       const title = $("#new-task").value.trim();
       if (!title || !state.openProjectId) return;
       $("#new-task").value = "";
-      await sb.from("tasks").insert({ title, project_id: state.openProjectId });
+      await db.insert("tasks", { title, project_id: state.openProjectId, done: false });
       loadAll();
     };
     $("#new-task").addEventListener("keydown", (e) => e.key === "Enter" && $("#add-task").click());
@@ -254,14 +302,14 @@
       if (!label || isNaN(amount) || !state.openProjectId) return;
       $("#cost-label").value = "";
       $("#cost-amount").value = "";
-      await sb.from("costs").insert({ label, amount, project_id: state.openProjectId });
+      await db.insert("costs", { label, amount, project_id: state.openProjectId });
       loadAll();
     };
 
     $("#delete-project").onclick = async () => {
       if (!state.openProjectId) return;
       if (!confirm("Delete this project and all its tasks and costs?")) return;
-      await sb.from("projects").delete().eq("id", state.openProjectId);
+      await db.remove("projects", state.openProjectId);
       state.openProjectId = null;
       loadAll();
       go("projects");
@@ -272,7 +320,7 @@
       const body = $("#chat-input").value.trim();
       if (!body) return;
       $("#chat-input").value = "";
-      await sb.from("messages").insert({ author: state.who, body });
+      await db.insert("messages", { author: state.who, body });
       markChatSeen();
       loadAll();
     });
@@ -292,13 +340,11 @@
     av.textContent = state.who.charAt(0);
     av.className = "av av-" + state.who.toLowerCase();
     $("#conn-info").textContent = sb
-      ? "Connected to Supabase."
-      : "Offline — add keys in config.js and reload.";
+      ? "Synced with Supabase — Cudii and Ace share the same data."
+      : "Saving on this device only. Add Supabase keys in config.js to sync with Ace.";
     go("projects");
-    if (sb) {
-      loadAll();
-      subscribe();
-    }
+    loadAll();
+    if (sb) subscribe();
   }
 
   wire();
