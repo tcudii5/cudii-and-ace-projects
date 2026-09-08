@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Cudii &amp; Ace — Projects</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50' y='68' font-size='54' text-anchor='middle' fill='%23f8fafc' font-family='Arial'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Setup screen -->
+    <section id="setup" class="screen" hidden>
+      <div class="setup-card">
+        <h1>Cudii &amp; Ace</h1>
+        <p class="muted">Project HQ — first-time setup on this device.</p>
+
+        <label>Who are you?</label>
+        <div class="who-row">
+          <button class="who" data-who="Cudii">Cudii</button>
+          <button class="who" data-who="Ace">Ace</button>
+        </div>
+
+        <div id="conn-warn" class="warn" hidden>
+          Not connected to Supabase yet. Add your keys in <code>config.js</code>, then reload.
+        </div>
+
+        <button id="setup-done" class="primary" disabled>Start</button>
+      </div>
+    </section>
+
+    <!-- Main -->
+    <main id="main" hidden>
+      <!-- PROJECTS LIST -->
+      <section id="view-projects" class="view">
+        <header class="bar">
+          <h1>Projects</h1>
+          <span id="conn-dot" class="dot" title="connection"></span>
+        </header>
+
+        <div class="add-row">
+          <input id="new-project" type="text" placeholder="New project name" />
+          <button id="add-project" class="primary sm">Add</button>
+        </div>
+
+        <div id="project-list" class="list"></div>
+        <p id="projects-empty" class="muted center" hidden>No projects yet. Add the first one above.</p>
+      </section>
+
+      <!-- PROJECT DETAIL -->
+      <section id="view-detail" class="view" hidden>
+        <header class="bar">
+          <button id="back" class="link">‹ Projects</button>
+          <span></span>
+        </header>
+
+        <input id="detail-name" class="detail-name" type="text" />
+        <div class="field-row">
+          <input id="detail-client" type="text" placeholder="Client / contact" />
+          <select id="detail-status">
+            <option>Lead</option>
+            <option>Active</option>
+            <option>On hold</option>
+            <option>Done</option>
+          </select>
+        </div>
+
+        <div class="totals">
+          <div><span class="totals-label">Total cost</span><span id="detail-total" class="totals-value">$0</span></div>
+          <div><span class="totals-label">To do</span><span id="detail-open" class="totals-value">0</span></div>
+        </div>
+
+        <h2>What needs doing</h2>
+        <div class="add-row">
+          <input id="new-task" type="text" placeholder="Add a task" />
+          <button id="add-task" class="primary sm">Add</button>
+        </div>
+        <div id="task-list" class="list"></div>
+
+        <h2>Costs</h2>
+        <div class="add-row three">
+          <input id="cost-label" type="text" placeholder="Item (e.g. Hosting)" />
+          <input id="cost-amount" type="number" inputmode="decimal" placeholder="0.00" />
+          <button id="add-cost" class="primary sm">Add</button>
+        </div>
+        <div id="cost-list" class="list"></div>
+
+        <button id="delete-project" class="danger">Delete project</button>
+      </section>
+
+      <!-- CHAT -->
+      <section id="view-chat" class="view" hidden>
+        <header class="bar"><h1>Chat</h1></header>
+        <div id="chat-log" class="chat-log"></div>
+        <form id="chat-form" class="chat-form">
+          <input id="chat-input" type="text" placeholder="Message…" autocomplete="off" />
+          <button class="primary sm" type="submit">Send</button>
+        </form>
+      </section>
+
+      <!-- NAV -->
+      <nav id="nav">
+        <button data-nav="projects" class="active">Projects</button>
+        <button data-nav="chat">Chat<span id="chat-badge" class="badge" hidden></span></button>
+        <button data-nav="me">Me</button>
+      </nav>
+
+      <!-- ME / SETTINGS -->
+      <section id="view-me" class="view" hidden>
+        <header class="bar"><h1>Me</h1></header>
+        <p>Signed in as <strong id="me-name"></strong> on this device.</p>
+        <button id="switch-who" class="link">Switch person</button>
+        <p class="muted small" id="conn-info"></p>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
